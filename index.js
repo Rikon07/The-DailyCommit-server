@@ -4,7 +4,8 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
-
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { ObjectId } = require("mongodb");
 
 //Middlewares
@@ -82,9 +83,25 @@ async function run() {
       if (existingUser) {
         return res.status(200).send({ message: "User already exists" });
       }
+      if (!user.premiumTaken) user.premiumTaken = null;
 
       const result = await usersCollection.insertOne(user);
       res.send(result);
+    });
+
+    // Create payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: price * 100, // Stripe expects cents
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
+        res.send({ clientSecret: paymentIntent.client_secret });
+      } catch (err) {
+        res.status(500).send({ error: err.message });
+      }
     });
 
     // Subscription
@@ -101,6 +118,14 @@ async function run() {
         res.send(result);
       }
     );
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await usersCollection.findOne({ email });
+      if (!user) {
+        return res.status(404).send({ message: "User not found" });
+      }
+      res.send(user);
+    });
 
     // Admin Routes
     app.get("/users/make-admin/:email", async (req, res) => {
