@@ -72,7 +72,38 @@ async function run() {
       res.send(result);
     });
 
-    
+    app.get("/users/make-admin/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log("Gets email", email);
+      try {
+        const user = await usersCollection.findOne({ email });
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(user);
+      } catch (err) {
+        res.status(500).json({ message: "Server error", error: err.message });
+      }
+    });
+
+    app.patch(
+      "/users/make-admin/:email",
+      verifyFirebaseToken,
+      async (req, res) => {
+        const email = req.params.email;
+
+        // only rik.shelby@gmail.com can promote
+        if (req.decoded?.email !== "rik.shelby@gmail.com") {
+          return res.status(403).send({ error: true, message: "Unauthorized" });
+        }
+
+        const filter = { email };
+        const update = { $set: { role: "admin" } };
+        const result = await usersCollection.updateOne(filter, update);
+        res.send(result);
+      }
+    );
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
