@@ -58,6 +58,21 @@ async function run() {
     await client.connect();
 
     const usersCollection = client.db("usersDB").collection("users");
+    const articlesCollection = client.db("articlesDB").collection("articles");
+
+    // POST /articles
+    app.post("/articles", async (req, res) => {
+      try {
+        const article = req.body;
+        console.log("Received article:", article);
+
+        const result = await articlesCollection.insertOne(article);
+        res.send({ insertedId: result.insertedId });
+      } catch (error) {
+        console.error("Error submitting article:", error);
+        res.status(500).send({ message: "Server error" });
+      }
+    });
 
     // POST /users
     app.post("/users", async (req, res) => {
@@ -72,6 +87,22 @@ async function run() {
       res.send(result);
     });
 
+    // Subscription
+    app.patch(
+      "/users/premium/:email",
+      verifyFirebaseToken,
+      async (req, res) => {
+        const email = req.params.email;
+        const { premiumTaken } = req.body;
+        const result = await usersCollection.updateOne(
+          { email },
+          { $set: { premiumTaken } }
+        );
+        res.send(result);
+      }
+    );
+
+    // Admin Routes
     app.get("/users/make-admin/:email", async (req, res) => {
       const email = req.params.email;
       console.log("Gets email", email);
