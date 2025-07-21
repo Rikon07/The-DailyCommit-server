@@ -145,6 +145,34 @@ app.get("/publishers", async (req, res) => {
         res.status(500).send({ message: "Server error" });
       }
     });
+    // Backend: Express route for all articles with search/filter
+app.get("/articles", async (req, res) => {
+  const { publisher, tags, search } = req.query;
+  const query = { status: "approved" };
+
+  if (publisher) query.publisher = publisher;
+  if (tags) query.tags = { $in: tags.split(",") };
+  if (search) query.title = { $regex: search, $options: "i" };
+
+  const articles = await articlesCollection.find(query).toArray();
+  res.send(articles);
+});
+// Increment view count and return article
+app.get("/articles/:id", async (req, res) => {
+  const id = req.params.id;
+  let article;
+  try {
+    article = await articlesCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $inc: { views: 1 } },
+      { returnDocument: "after" }
+    );
+  } catch (e) {
+    return res.status(404).send({ message: "Article not found" });
+  }
+  if (!article) return res.status(404).send({ message: "Article not found" });
+  res.send(article);
+});
 
     // POST /users
     app.post("/users", async (req, res) => {
