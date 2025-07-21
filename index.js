@@ -106,31 +106,43 @@ async function run() {
 
     // Subscription
     app.patch(
-      "/users/premium/:email",
-      verifyFirebaseToken,
-      async (req, res) => {
-        const email = req.params.email;
-        const { premiumTaken } = req.body;
-        const result = await usersCollection.updateOne(
-          { email },
-          { $set: { premiumTaken } }
-        );
-        res.send(result);
-      }
+  "/users/premium/:email",
+  verifyFirebaseToken,
+  async (req, res) => {
+    const email = req.params.email;
+    const { premiumTaken, type } = req.body;
+    const updateFields = { premiumTaken };
+    if (type) updateFields.type = type;
+    console.log("Updating user premium status:", email, updateFields);
+    const result = await usersCollection.updateOne(
+      { email },
+      { $set: updateFields }
     );
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const user = await usersCollection.findOne({ email });
-      if (!user) {
-        return res.status(404).send({ message: "User not found" });
-      }
-      res.send(user);
-    });
+    res.send(result);
+  }
+);
+
+    // Premium check on Navbar
+app.get('/users/:email', async (req, res) => {
+  const email = req.params.email;
+  const user = await usersCollection.findOne({ email });
+  if (!user) {
+    return res.status(404).send({ message: "User not found" });
+  }
+  res.send(user);
+});
+
+    // Check if user is admin
+app.get('/users/admin/:email', async (req, res) => {
+  const email = req.params.email;
+  const user = await usersCollection.findOne({ email });
+  res.send({ admin: user?.role === "admin" });
+});
 
     // Admin Routes
     app.get("/users/make-admin/:email", async (req, res) => {
       const email = req.params.email;
-      console.log("Gets email", email);
+      // console.log("Gets email", email);
       try {
         const user = await usersCollection.findOne({ email });
         if (!user) {
