@@ -61,6 +61,77 @@ async function run() {
     const usersCollection = client.db("usersDB").collection("users");
     const articlesCollection = client.db("articlesDB").collection("articles");
 
+    
+    // Get all users
+app.get("/users", async (req, res) => {
+  const users = await usersCollection.find().toArray();
+  res.send(users);
+});
+
+// Make admin
+app.patch("/users/make-admin/:email", verifyFirebaseToken, async (req, res) => {
+  const email = req.params.email;
+  const result = await usersCollection.updateOne(
+    { email },
+    { $set: { role: "admin" } }
+  );
+  res.send(result);
+});
+// Get all articles
+app.get("/articles", async (req, res) => {
+  const articles = await articlesCollection.find().toArray();
+  res.send(articles);
+});
+
+// Approve, decline, delete, make premium
+app.patch("/articles/approve/:id", verifyFirebaseToken, async (req, res) => {
+  const id = req.params.id;
+  const result = await articlesCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { status: "approved" } }
+  );
+  res.send(result);
+});
+
+app.patch("/articles/decline/:id", verifyFirebaseToken, async (req, res) => {
+  const id = req.params.id;
+  const { reason } = req.body;
+  const result = await articlesCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { status: "declined", declineReason: reason } }
+  );
+  res.send(result);
+});
+
+app.delete("/articles/:id", verifyFirebaseToken, async (req, res) => {
+  const id = req.params.id;
+  const result = await articlesCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
+app.patch("/articles/premium/:id", verifyFirebaseToken, async (req, res) => {
+  const id = req.params.id;
+  const result = await articlesCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { isPremium: true } }
+  );
+  res.send(result);
+});
+// Add publisher
+app.post("/publishers", async (req, res) => {
+  const { name, logo } = req.body;
+  if (!name || !logo) return res.status(400).send({ message: "Name and logo required" });
+  const result = await client.db("articlesDB").collection("publishers").insertOne({ name, logo });
+  res.send(result);
+});
+
+// Get all publishers
+app.get("/publishers", async (req, res) => {
+  const publishers = await client.db("articlesDB").collection("publishers").find().toArray();
+  res.send(publishers);
+});
+    
+    
     // POST /articles
     app.post("/articles", async (req, res) => {
       try {
