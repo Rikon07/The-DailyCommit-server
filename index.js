@@ -78,10 +78,10 @@ app.patch("/users/make-admin/:email", verifyFirebaseToken, async (req, res) => {
   res.send(result);
 });
 // Get all articles
-app.get("/articles", async (req, res) => {
-  const articles = await articlesCollection.find().toArray();
-  res.send(articles);
-});
+// app.get("/articles", async (req, res) => {
+//   const articles = await articlesCollection.find().toArray();
+//   res.send(articles);
+// });
 
 // Approve, decline, delete, make premium
 app.patch("/articles/approve/:id", verifyFirebaseToken, async (req, res) => {
@@ -147,14 +147,16 @@ app.get("/publishers", async (req, res) => {
     });
     // Backend: Express route for all articles with search/filter
 app.get("/articles", async (req, res) => {
-  const { publisher, tags, search } = req.query;
+  const { publisher, tags, search, isPremium } = req.query;
   const query = { status: "approved" };
 
   if (publisher) query.publisher = publisher;
   if (tags) query.tags = { $in: tags.split(",") };
   if (search) query.title = { $regex: search, $options: "i" };
+  if (isPremium === "true") query.isPremium = true;
 
   const articles = await articlesCollection.find(query).toArray();
+  // console.log("Articles found:", articles);
   res.send(articles);
 });
 // Increment view count and return article
@@ -172,6 +174,12 @@ app.get("/articles/:id", async (req, res) => {
   }
   if (!article) return res.status(404).send({ message: "Article not found" });
   res.send(article);
+});
+// Get all articles by a user
+app.get("/my-articles/:email", async (req, res) => {
+  const email = req.params.email;
+  const articles = await articlesCollection.find({ authorEmail: email }).toArray();
+  res.send(articles);
 });
 
     // POST /users
