@@ -191,6 +191,23 @@ app.get("/my-articles/:email", async (req, res) => {
   const articles = await articlesCollection.find({ authorEmail: email }).toArray();
   res.send(articles);
 });
+// Top contributors
+app.get("/contributors/top", async (req, res) => {
+  const pipeline = [
+    {
+      $group: {
+        _id: "$authorEmail",
+        count: { $sum: 1 },
+        name: { $first: "$authorName" },
+        photo: { $first: "$authorPhoto" },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: 8 },
+  ];
+  const contributors = await articlesCollection.aggregate(pipeline).toArray();
+  res.send(contributors);
+});
 
     // POST /users
     app.post("/users", async (req, res) => {
