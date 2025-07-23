@@ -77,11 +77,11 @@ app.patch("/users/make-admin/:email", verifyFirebaseToken, async (req, res) => {
   );
   res.send(result);
 });
-// Get all articles
-// app.get("/articles", async (req, res) => {
-//   const articles = await articlesCollection.find().toArray();
-//   res.send(articles);
-// });
+// Get all articles (no filter) for admin dashboard
+app.get("/admin/articles", verifyFirebaseToken, async (req, res) => {
+  const articles = await articlesCollection.find().toArray();
+  res.send(articles);
+});
 
 // Approve, decline, delete, make premium
 app.patch("/articles/approve/:id", verifyFirebaseToken, async (req, res) => {
@@ -129,6 +129,16 @@ app.post("/publishers", async (req, res) => {
 app.get("/publishers", async (req, res) => {
   const publishers = await client.db("articlesDB").collection("publishers").find().toArray();
   res.send(publishers);
+});
+//Articles Update
+app.patch("/articles/:id", verifyFirebaseToken, async (req, res) => {
+  const id = req.params.id;
+  const updateData = req.body;
+  const result = await articlesCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updateData }
+  );
+  res.send(result);
 });
     
     
@@ -244,6 +254,15 @@ app.get('/users/admin/:email', async (req, res) => {
   const email = req.params.email;
   const user = await usersCollection.findOne({ email });
   res.send({ admin: user?.role === "admin" });
+});
+
+// Statistics
+app.get("/statistics/users", async (req, res) => {
+  const users = await usersCollection.find().toArray();
+  const total = users.length;
+  const premium = users.filter(u => u.type === "premium").length;
+  const normal = users.filter(u => u.type === "normal" || !u.type).length;
+  res.send({ total, premium, normal });
 });
 
     // Admin Routes
