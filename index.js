@@ -63,9 +63,17 @@ async function run() {
 
     
     // Get all users
+// app.get("/users", async (req, res) => {
+//   const users = await usersCollection.find().toArray();
+//   res.send(users);
+// });
 app.get("/users", async (req, res) => {
-  const users = await usersCollection.find().toArray();
-  res.send(users);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const total = await usersCollection.countDocuments();
+  const users = await usersCollection.find().skip(skip).limit(limit).toArray();
+  res.send({ users, total });
 });
 
 // Make admin
@@ -78,9 +86,17 @@ app.patch("/users/make-admin/:email", verifyFirebaseToken, async (req, res) => {
   res.send(result);
 });
 // Get all articles (no filter) for admin dashboard
+// app.get("/admin/articles", verifyFirebaseToken, async (req, res) => {
+//   const articles = await articlesCollection.find().toArray();
+//   res.send(articles);
+// });
 app.get("/admin/articles", verifyFirebaseToken, async (req, res) => {
-  const articles = await articlesCollection.find().toArray();
-  res.send(articles);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const total = await articlesCollection.countDocuments();
+  const articles = await articlesCollection.find().skip(skip).limit(limit).toArray();
+  res.send({ articles, total });
 });
 
 // Approve, decline, delete, make premium
@@ -222,6 +238,17 @@ app.get("/contributors/top", async (req, res) => {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    //Profile Update
+    app.patch("/users/:email", async (req, res) => {
+  const email = req.params.email;
+  const { name, photo } = req.body;
+  const result = await usersCollection.updateOne(
+    { email },
+    { $set: { name, photo } }
+  );
+  res.send(result);
+});
 
     // Create payment intent
     app.post("/create-payment-intent", async (req, res) => {
