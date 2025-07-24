@@ -159,18 +159,35 @@ app.patch("/articles/:id", verifyFirebaseToken, async (req, res) => {
     
     
     // POST /articles
+    // app.post("/articles", async (req, res) => {
+    //   try {
+    //     const article = req.body;
+    //     const result = await articlesCollection.insertOne(article);
+    //     res.send({ insertedId: result.insertedId });
+    //   } catch (error) {
+    //     console.error("Error submitting article:", error);
+    //     res.status(500).send({ message: "Server error" });
+    //   }
+    // });
     app.post("/articles", async (req, res) => {
-      try {
-        const article = req.body;
-        console.log("Received article:", article);
-
-        const result = await articlesCollection.insertOne(article);
-        res.send({ insertedId: result.insertedId });
-      } catch (error) {
-        console.error("Error submitting article:", error);
-        res.status(500).send({ message: "Server error" });
+  try {
+    const article = req.body;
+    const user = await usersCollection.findOne({ email: article.authorEmail });
+    // If user is normal, check if they already have an article
+    if (user?.type !== "premium") {
+      const existing = await articlesCollection.findOne({ authorEmail: article.authorEmail });
+      if (existing) {
+        return res.status(403).send({ message: "Normal users can only post 1 article. Upgrade to premium for unlimited posts." });
       }
-    });
+    }
+    const result = await articlesCollection.insertOne(article);
+    res.send({ insertedId: result.insertedId });
+  } catch (error) {
+    console.error("Error submitting article:", error);
+    res.status(500).send({ message: "Server error" });
+  }
+});
+
     // Backend: Express route for all articles with search/filter
 app.get("/articles", async (req, res) => {
   const { publisher, tags, search, isPremium } = req.query;
