@@ -19,7 +19,10 @@ admin.initializeApp({
 // --- Middleware ---
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://the-daily-commit-c5e84.web.app"
+    ],
     credentials: true,
   })
 );
@@ -54,7 +57,7 @@ const client = new MongoClient(uri, {
 // --- Main App Logic ---
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const usersCollection = client.db("usersDB").collection("users");
     const articlesCollection = client.db("articlesDB").collection("articles");
     const publishersCollection = client.db("articlesDB").collection("publishers");
@@ -334,14 +337,16 @@ async function run() {
     });
 
     // --- MongoDB Connection Test ---
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // await client.close();
   }
 }
 run().catch(console.dir);
-
+app.get("/", (req, res) => {
+  res.send("Welcome to my Newspaper Fullstack Project: The DailyCommit");
+});
 // --- Start Server ---
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
