@@ -308,13 +308,27 @@ app.get("/articles", async (req, res) => {
     });
 
     // User statistics
+    // app.get("/statistics/users", async (req, res) => {
+    //   const users = await usersCollection.find().toArray();
+    //   const total = users.length;
+    //   const premium = users.filter(u => u.type === "premium").length;
+    //   const normal = users.filter(u => u.type === "normal" || !u.type).length;
+    //   res.send({ total, premium, normal });
+    // });
     app.get("/statistics/users", async (req, res) => {
-      const users = await usersCollection.find().toArray();
-      const total = users.length;
-      const premium = users.filter(u => u.type === "premium").length;
-      const normal = users.filter(u => u.type === "normal" || !u.type).length;
-      res.send({ total, premium, normal });
-    });
+  const users = await usersCollection.find().toArray();
+  const articles = await articlesCollection.find().toArray();
+  const totalUsers = users.length;
+  const premiumUsers = users.filter(u => u.type === "premium").length;
+  const totalArticles = articles.length;
+  const premiumArticles = articles.filter(a => a.isPremium).length;
+  res.send({
+    totalUsers,
+    premiumUsers,
+    totalArticles,
+    premiumArticles,
+  });
+});
 
     // --- Stripe Payment ---
 
