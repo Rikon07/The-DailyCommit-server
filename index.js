@@ -141,16 +141,32 @@ async function run() {
     // --- Article Routes ---
 
     // Get all articles (public, with filters)
-    app.get("/articles", async (req, res) => {
-      const { publisher, tags, search, isPremium } = req.query;
-      const query = { status: "approved" };
-      if (publisher) query.publisher = publisher;
-      if (tags) query.tags = { $in: tags.split(",") };
-      if (search) query.title = { $regex: search, $options: "i" };
-      if (isPremium === "true") query.isPremium = true;
-      const articles = await articlesCollection.find(query).toArray();
-      res.send(articles);
-    });
+    // app.get("/articles", async (req, res) => {
+    //   const { publisher, tags, search, isPremium } = req.query;
+    //   const query = { status: "approved" };
+    //   if (publisher) query.publisher = publisher;
+    //   if (tags) query.tags = { $in: tags.split(",") };
+    //   if (search) query.title = { $regex: search, $options: "i" };
+    //   if (isPremium === "true") query.isPremium = true;
+    //   const articles = await articlesCollection.find(query).toArray();
+    //   res.send(articles);
+    // });
+    // Get all articles (public, with filters and pagination)
+app.get("/articles", async (req, res) => {
+  const { publisher, tags, search, isPremium, page = 1, limit = 9 } = req.query;
+  const query = { status: "approved" };
+
+  if (publisher) query.publisher = publisher;
+  if (tags) query.tags = { $in: tags.split(",") };
+  if (search) query.title = { $regex: search, $options: "i" };
+  if (isPremium === "true") query.isPremium = true;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const total = await articlesCollection.countDocuments(query);
+  const articles = await articlesCollection.find(query).skip(skip).limit(parseInt(limit)).toArray();
+
+  res.send({ articles, total });
+});
 
     // Get all articles (admin, paginated)
     app.get("/admin/articles", verifyFirebaseToken, async (req, res) => {
