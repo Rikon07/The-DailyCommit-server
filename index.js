@@ -152,8 +152,23 @@ async function run() {
     //   res.send(articles);
     // });
     // Get all articles (public, with filters and pagination)
+// app.get("/articles", async (req, res) => {
+//   const { publisher, tags, search, isPremium, page = 1, limit = 9 } = req.query;
+//   const query = { status: "approved" };
+
+//   if (publisher) query.publisher = publisher;
+//   if (tags) query.tags = { $in: tags.split(",") };
+//   if (search) query.title = { $regex: search, $options: "i" };
+//   if (isPremium === "true") query.isPremium = true;
+
+//   const skip = (parseInt(page) - 1) * parseInt(limit);
+//   const total = await articlesCollection.countDocuments(query);
+//   const articles = await articlesCollection.find(query).skip(skip).limit(parseInt(limit)).toArray();
+
+//   res.send({ articles, total });
+// });
 app.get("/articles", async (req, res) => {
-  const { publisher, tags, search, isPremium, page = 1, limit = 9 } = req.query;
+  const { publisher, tags, search, isPremium, page = 1, limit = 9, sort } = req.query;
   const query = { status: "approved" };
 
   if (publisher) query.publisher = publisher;
@@ -162,8 +177,19 @@ app.get("/articles", async (req, res) => {
   if (isPremium === "true") query.isPremium = true;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  // Add sort option
+  let sortOption = {};
+  if (sort === "views-desc") sortOption = { views: -1 };
+  else if (sort === "views-asc") sortOption = { views: 1 };
+
   const total = await articlesCollection.countDocuments(query);
-  const articles = await articlesCollection.find(query).skip(skip).limit(parseInt(limit)).toArray();
+  const articles = await articlesCollection
+    .find(query)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .toArray();
 
   res.send({ articles, total });
 });
