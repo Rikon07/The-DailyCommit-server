@@ -22,15 +22,13 @@ This is the **backend server** for The DailyCommit — a Computer science News p
 
 ---
 
-## 📁 Folder Structure
-.
-├── index.js
-├── .env
-├── package.json
-└── README.md
-└── vercel.json
+## 🚀 Live Site
 
+[https://the-daily-commit-c5e84.web.app/](https://the-daily-commit-c5e84.web.app/)
 
 ---
+
+#Client Side Repo
+https://github.com/Rikon07/The-DailyCommit
 
 
